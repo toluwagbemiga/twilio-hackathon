@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Twilio\Rest\Client;
 use Twilio\TwiML\VoiceResponse;
-use OpenAI\Client as OpenAIClient;
+
 use App\Models\User;
 use App\Models\Conversation;
 use App\Models\Message;
 use LanguageDetector\LanguageDetector;
+use Gemini\Laravel\Facades\Gemini;
 
 class VoiceController extends Controller
 {
@@ -29,7 +30,7 @@ class VoiceController extends Controller
         $response->gather([
             'input' => 'dtmf',
             'numDigits' => 1,
-            'action' => route('handle-keypad-input'),
+            'action' => route('webhook.voice.keypad'),
             'method' => 'POST'
         ])->say('Press 0 to talk to an agent or any other key to continue.', ['language' => $user->language]);
 
@@ -55,10 +56,10 @@ class VoiceController extends Controller
         } else {
             $response->say('Please state your query after the beep.', ['language' => $user->language]);
             $response->record([
-                'action' => route('handle-recording'), 
+                'action' => route('webhook.voice.recording'), 
                 'maxLength' => 30, 
                 'transcribe' => true, 
-                'transcribeCallback' => route('handle-transcription'),
+                'transcribeCallback' => route('webhook.voice.transcription'),
                 'playBeep' => true
            ]);
         }
@@ -151,14 +152,8 @@ class VoiceController extends Controller
         }
 
         // Call your AI API here
-        $openAI = new OpenAIClient(env('OPENAI_API_KEY'));
-        $response = $openAI->completions()->create([
-            'model' => 'text-davinci-003',
-            'prompt' => $context,
-            'max_tokens' => 150,
-        ]);
-
-        return trim($response['choices'][0]['text']);
+        $response = Gemini::geminiPro()->generateContent($context);
+        return $response->text();
     }
 
     private function sendTwilioVoiceResponse($to, $message, $language)

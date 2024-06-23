@@ -87,7 +87,7 @@
         })
         .then(response =>response.json())
         .then(data => {
-            if (response.ok) {
+            if (data.message) {
                 alert(data.message);
                 window.location.href = "{{ route('admin.dashboard') }}";
             } else {

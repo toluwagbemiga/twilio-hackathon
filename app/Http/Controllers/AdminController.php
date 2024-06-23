@@ -15,10 +15,10 @@ class AdminController extends Controller
 
     public function __construct()
     {
-        $this->openAiClient = new OpenAIClient(env('OPENAI_API_KEY'));
+     
     }
 
-    public function indexDashboard()
+    public function index()
     {
         $callConversations = Conversation::with('user', 'messages')
             ->where('type', 'call')
@@ -26,11 +26,13 @@ class AdminController extends Controller
         $smsConversations = Conversation::with('user', 'messages')
             ->where('type', 'sms')
             ->get();
-
-        return view('admin.dashboard', compact('callConversations', 'smsConversations'));
+        $WhatsappConversations = Conversation::with('user', 'messages')
+            ->where('type', 'whatsapp')
+            ->get();
+        return view('admin.dashboard', compact('callConversations', 'smsConversations', 'WhatsappConversations'));
     }
 
-    public function closeDashboardConversation($id)
+    public function closeConversation($id)
     {
         $conversation = Conversation::find($id);
         $conversation->is_closed = true;
@@ -39,26 +41,5 @@ class AdminController extends Controller
         return redirect()->back()->with('status', 'Conversation closed.');
     }
 
-    public function generateSMS(Request $request)
-    {
-        $description = $request->input('description');
-        $maxTokens = $request->input('max_tokens');
-
-        $response = $this->openAiClient->completions()->create([
-            'model' => 'text-davinci-003',
-            'prompt' => $description,
-            'max_tokens' => $maxTokens,
-        ]);
-
-        $generatedSMS = trim($response['choices'][0]['text']);
-
-        // Save the BulkSMS record
-        BulkSMS::create([
-            'description' => $description,
-            'generated_sms' => $generatedSMS,
-            'max_tokens' => $maxTokens
-        ]);
-
-        return response()->json(['generated_sms' => $generatedSMS]);
-    }
+   
 }

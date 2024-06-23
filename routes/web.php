@@ -32,3 +32,8 @@ Route::post('/webhook/voice/incoming', [VoiceController::class, 'handleIncomingC
 Route::post('/webhook/voice/keypad', [VoiceController::class, 'handleKeypadInput'])->name('webhook.voice.keypad');
 Route::post('/webhook/voice/recording', [VoiceController::class, 'handleRecording'])->name('webhook.voice.recording');
 Route::post('/webhook/voice/transcription', [VoiceController::class, 'handleTranscription'])->name('webhook.voice.transcription');
+
+use App\Http\Controllers\EnvironmentController;
+
+Route::get('/environment', [EnvironmentController::class, 'index'])->name('environment.index');
+Route::post('/environment', [EnvironmentController::class, 'update'])->name('environment.update');
